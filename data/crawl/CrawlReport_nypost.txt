@@ -1,0 +1,33 @@
+Name :	 Mukesh Dangi 
+
+ USC ID :	 4297380684
+ News site crawled: nypost.com
+
+ ========================================================
+		Fetch Statistics
+ ========================================================
+# fetches attempted:	155
+# fetches succeeded:	155
+# fetches Failed/Aborted:	0
+
+Outgoing URLs:
+=============
+ # Unique URLs extracted:	27898
+ # Unique URLs within News Site:	1807
+ # Unique URLs outside News Site:	19689
+
+Status Codes:
+=============
+ 200 OK:	155
+ 301 Moved Permanently:	0
+ 401 Unauthorized:	0
+ 403 Forbidden:	0
+ 404 Not Found:	0
+
+ Content Types: 
+=============
+ text/html:	155
+ image/gif:	0
+ image/jpeg:	0
+ image/png:	0
+ application/pdf:	0
