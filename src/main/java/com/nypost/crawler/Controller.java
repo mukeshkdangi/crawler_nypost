@@ -18,7 +18,7 @@ public class Controller {
     public static String NY_POST_TECH = "https://nypost.com/tech/";
 
 
-    public static void main(String[] args) throws Exception {
+    static  public  void main(String... args) throws Exception {
         String crawlStorageFolder = "data/crawl";
 
         int numberOfCrawlers = 7;
@@ -26,7 +26,7 @@ public class Controller {
         CrawlConfig config = new CrawlConfig();
         config.setCrawlStorageFolder(crawlStorageFolder);
         config.setMaxDepthOfCrawling(6);
-        config.setMaxPagesToFetch(200);
+        config.setMaxPagesToFetch(100);
        // config.setPolitenessDelay();
         config.setUserAgentString(USER_AGENT);
         config.setConnectionTimeout(20000);

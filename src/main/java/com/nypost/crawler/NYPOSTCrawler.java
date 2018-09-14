@@ -16,6 +16,8 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Set;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 import edu.uci.ics.crawler4j.crawler.Page;
 import edu.uci.ics.crawler4j.crawler.WebCrawler;
@@ -34,7 +36,7 @@ public class NYPOSTCrawler extends WebCrawler {
 
     private void handleUrl(WebURL curURL) {
         try {
-            int statusCode  =200;// this.getMyController().getPageFetcher().fetchPage(curURL).getStatusCode();
+            int statusCode = 200;// this.getMyController().getPageFetcher().fetchPage(curURL).getStatusCode();
 
             String href = curURL.getURL().toLowerCase();
             String status = (href.startsWith(Controller.HTTPS_NY_POST_NEWS) ||
@@ -42,19 +44,35 @@ public class NYPOSTCrawler extends WebCrawler {
             URLsNYPost urlsNyPost = URLsNYPost.builder().url(curURL.getURL()).okayStatus(status).isExcluded(WebConstant.FILTERS.matcher(href).matches()).statusCode(statusCode).build();
 
             urlsNyPostData.add(urlsNyPost);
-        }catch (Exception e){
+        } catch (Exception e) {
             e.printStackTrace();
         }
     }
 
     @Override
     public boolean shouldVisit(Page referringPage, WebURL url) {
-        String href = url.getURL().toLowerCase();
         handleUrl(url);
+        boolean shouldVisit = shouldReturnIndicator(referringPage, url);
+        if (shouldVisit) {
+            updateVisitStats();
+        }
+        return shouldVisit;
+    }
+
+    //TODO
+    private void updateVisitStats() {
+    }
+
+
+
+    private boolean shouldReturnIndicator(Page referringPage, WebURL url) {
+        String href = url.getURL().toLowerCase();
         return !WebConstant.FILTERS.matcher(href).matches()
                 && href.startsWith(Controller.HTTPS_NY_POST_NEWS);
     }
 
+
+    //TODO remove count stats and replace to updateVisitStats
     @Override
     public void visit(Page page) {
 
@@ -104,7 +122,7 @@ public class NYPOSTCrawler extends WebCrawler {
 
 
             writer = new FileWriter(WebConstant.URL_NYPOST);
-            CSVUtils.writeLine(writer, Arrays.asList(WebConstant.URL, WebConstant.STATUS_OK_NOK, "HREF","STATUS Code"));
+            CSVUtils.writeLine(writer, Arrays.asList(WebConstant.URL, WebConstant.STATUS_OK_NOK, "HREF", "STATUS Code"));
             buildURLCSV(writer);
 
             writer = new FileWriter(WebConstant.OK_NOVISIT_NYPOST);
@@ -140,6 +158,7 @@ public class NYPOSTCrawler extends WebCrawler {
             long pdfCount = visitNyPostData.parallelStream().filter(data -> data.getContentType().contains("application/pdf")).count();
 
             long totalOutGoingNumbers = visitNyPostData.parallelStream().mapToInt(data -> data.getOutLinkNumbers()).sum();
+
 
             long OKCount = urlsNyPostData.parallelStream().filter(data -> data.getOkayStatus().equals(WebConstant.STATUS_OK)).count();
             long NOKCount = urlsNyPostData.parallelStream().filter(data -> data.getOkayStatus().equals(WebConstant.STATUS_N_OK)).count();

@@ -6,19 +6,19 @@ Name :	 Mukesh Dangi
  ========================================================
 		Fetch Statistics
  ========================================================
-# fetches attempted:	155
-# fetches succeeded:	155
+# fetches attempted:	91
+# fetches succeeded:	91
 # fetches Failed/Aborted:	0
 
 Outgoing URLs:
 =============
- # Unique URLs extracted:	27898
- # Unique URLs within News Site:	1807
- # Unique URLs outside News Site:	19689
+ # Unique URLs extracted:	17042
+ # Unique URLs within News Site:	1361
+ # Unique URLs outside News Site:	12029
 
 Status Codes:
 =============
- 200 OK:	155
+ 200 OK:	91
  301 Moved Permanently:	0
  401 Unauthorized:	0
  403 Forbidden:	0
@@ -26,7 +26,7 @@ Status Codes:
 
  Content Types: 
 =============
- text/html:	155
+ text/html:	91
  image/gif:	0
  image/jpeg:	0
  image/png:	0
