@@ -12,5 +12,4 @@ public class URLsNYPost {
     private String url;
     private String okayStatus;
     private boolean isExcluded;
-    private int statusCode;
 }

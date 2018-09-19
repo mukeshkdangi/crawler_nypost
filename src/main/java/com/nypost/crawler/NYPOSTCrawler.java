@@ -16,8 +16,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Set;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 
 import edu.uci.ics.crawler4j.crawler.Page;
 import edu.uci.ics.crawler4j.crawler.WebCrawler;
@@ -30,18 +28,13 @@ public class NYPOSTCrawler extends WebCrawler {
     static List<NYPostCrawlInfo> visitNyPostData = new ArrayList<>();
     static List<FetechNYPost> fetchNyPostData = new ArrayList<>();
     static List<URLsNYPost> urlsNyPostData = new ArrayList<>();
-    long featchSucceded = 0;
-    static List<String> okNoVisitNyPostData = new ArrayList<>();
 
-
-    private void handleUrl(WebURL curURL) {
+    private void addURLsNYPost(WebURL curURL) {
         try {
-            int statusCode = 200;// this.getMyController().getPageFetcher().fetchPage(curURL).getStatusCode();
-
             String href = curURL.getURL().toLowerCase();
             String status = (href.startsWith(Controller.HTTPS_NY_POST_NEWS) ||
                     href.startsWith(Controller.HTTP_NY_POST_NEWS)) ? WebConstant.STATUS_OK : WebConstant.STATUS_N_OK;
-            URLsNYPost urlsNyPost = URLsNYPost.builder().url(curURL.getURL()).okayStatus(status).isExcluded(WebConstant.FILTERS.matcher(href).matches()).statusCode(statusCode).build();
+            URLsNYPost urlsNyPost = URLsNYPost.builder().url(curURL.getURL()).okayStatus(status).isExcluded(WebConstant.FILTERS.matcher(href).matches()).build();
 
             urlsNyPostData.add(urlsNyPost);
         } catch (Exception e) {
@@ -49,67 +42,52 @@ public class NYPOSTCrawler extends WebCrawler {
         }
     }
 
-    @Override
-    public boolean shouldVisit(Page referringPage, WebURL url) {
-        handleUrl(url);
-        boolean shouldVisit = shouldReturnIndicator(referringPage, url);
-        if (shouldVisit) {
-            updateVisitStats();
-        }
-        return shouldVisit;
-    }
-
-    //TODO
-    private void updateVisitStats() {
-    }
-
-
 
     private boolean shouldReturnIndicator(Page referringPage, WebURL url) {
         String href = url.getURL().toLowerCase();
         return !WebConstant.FILTERS.matcher(href).matches()
-                && href.startsWith(Controller.HTTPS_NY_POST_NEWS);
+                && (href.startsWith(Controller.HTTPS_NY_POST_NEWS) || href.startsWith(Controller.HTTP_NY_POST_NEWS));
+    }
+
+    @Override
+    public boolean shouldVisit(Page referringPage, WebURL url) {
+        addURLsNYPost(url);
+        return shouldReturnIndicator(referringPage, url);
     }
 
 
-    //TODO remove count stats and replace to updateVisitStats
+    private void updateVisitStats(Page page) {
+        String url = page.getWebURL().getURL();
+        String contentType = page.getContentType();
+        if (contentType.contains(WebConstant.TEXT_HTML)) {
+            contentType = WebConstant.TEXT_HTML;
+        }
+        HtmlParseData htmlParseData = (HtmlParseData) page.getParseData();
+
+        Set<WebURL> outGoingLinks = htmlParseData.getOutgoingUrls();
+
+        NYPostCrawlInfo nyPostCrawlInfo = NYPostCrawlInfo.builder().url(url.replaceAll(",", "_")).statusCode(String.valueOf(page.getStatusCode())).
+                contentType(contentType).outLinkNumbers(outGoingLinks.size()).
+                contentSize(page.getContentData().length / 1024)
+                .build();
+        visitNyPostData.add(nyPostCrawlInfo);
+    }
+
+
     @Override
     public void visit(Page page) {
-
-        String url = page.getWebURL().getURL();
-
-        if (page.getParseData() instanceof HtmlParseData) {
-            String contentType = "text/html";
-            try {
-                contentType = page.getContentType().substring(0, page.getContentType().indexOf(";"));
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
-            int statusCode = page.getStatusCode();
-            HtmlParseData htmlParseData = (HtmlParseData) page.getParseData();
-
-            String html = htmlParseData.getHtml();
-            Set<WebURL> outGoingLinks = htmlParseData.getOutgoingUrls();
-
-            NYPostCrawlInfo nyPostCrawlInfo = NYPostCrawlInfo.builder().url(url).statusCode(String.valueOf(statusCode)).
-                    contentType(contentType).outLinkNumbers(outGoingLinks.size()).
-                    contentSize(html.length() / 1024)
-                    .build();
-            visitNyPostData.add(nyPostCrawlInfo);
-        } else {
-            okNoVisitNyPostData.add(url);
-        }
+        updateVisitStats(page);
     }
 
     @Override
     protected void handlePageStatusCode(WebURL webUrl, int statusCode, String statusDescription) {
-        FetechNYPost fetchData = FetechNYPost.builder().url(webUrl.getURL()).statusCode(String.valueOf(statusCode)).build();
+        FetechNYPost fetchData = FetechNYPost.builder().url(webUrl.getURL().replaceAll(",", "_")).statusCode(String.valueOf(statusCode)).build();
         fetchNyPostData.add(fetchData);
 
     }
 
-    @Override
-    public void onBeforeExit() {
+
+    public static void onBeforeExitCrawler() {
         try {
             FileWriter writer = new FileWriter(WebConstant.FETCH_NYPOST);
             CSVUtils.writeLine(writer, Arrays.asList(WebConstant.URL, WebConstant.STATUS_CODE));
@@ -122,68 +100,97 @@ public class NYPOSTCrawler extends WebCrawler {
 
 
             writer = new FileWriter(WebConstant.URL_NYPOST);
-            CSVUtils.writeLine(writer, Arrays.asList(WebConstant.URL, WebConstant.STATUS_OK_NOK, "HREF", "STATUS Code"));
+            CSVUtils.writeLine(writer, Arrays.asList(WebConstant.URL, WebConstant.STATUS_OK_NOK));
             buildURLCSV(writer);
 
             writer = new FileWriter(WebConstant.OK_NOVISIT_NYPOST);
             CSVUtils.writeLine(writer, Arrays.asList(WebConstant.URL));
-            buildOKVisitURLCSV(writer);
 
             StringBuffer sbuff = new StringBuffer();
-            sbuff.append("Name :\t Mukesh Dangi \n");
-            sbuff.append("\n USC ID :\t 4297380684");
-            sbuff.append("\n News site crawled: nypost.com");
-
-            sbuff.append("\n\n ========================================================");
-            sbuff.append("\n\t\tFetch Statistics");
-            sbuff.append("\n ========================================================");
+            sbuff.append(WebConstant.AUTH_NAME).append(WebConstant.AUTH_ID).append(WebConstant.CRAWL_WEB).append(WebConstant.SEG_LINE).
+                    append(WebConstant.FETCH_STAT).append(WebConstant.SEG_LINE);
 
 
-            sbuff.append("\n# fetches attempted:\t" + visitNyPostData.size());
-            featchSucceded = visitNyPostData.parallelStream().filter(data -> !(Integer.valueOf(data.getStatusCode()) < 200 || Integer.valueOf(data.getStatusCode()) > 299)).count();
-
-            sbuff.append("\n# fetches succeeded:\t" + featchSucceded);
-            sbuff.append("\n# fetches Failed/Aborted:\t" + (visitNyPostData.size() - featchSucceded));
-
-            long twoHund = visitNyPostData.parallelStream().filter(data -> (Integer.valueOf(data.getStatusCode()) == 200)).count();
-            long threeHundOne = visitNyPostData.parallelStream().filter(data -> (Integer.valueOf(data.getStatusCode()) == 301)).count();
-            long fourNotOne = visitNyPostData.parallelStream().filter(data -> (Integer.valueOf(data.getStatusCode()) == 401)).count();
-            long fourNotThree = visitNyPostData.parallelStream().filter(data -> (Integer.valueOf(data.getStatusCode()) == 403)).count();
-            long fourNotFour = visitNyPostData.parallelStream().filter(data -> (Integer.valueOf(data.getStatusCode()) == 404)).count();
-
-            long textHtml = visitNyPostData.parallelStream().filter(data -> data.getContentType().contains("text/html")).count();
-            long imageGif = visitNyPostData.parallelStream().filter(data -> data.getContentType().contains("image/gif")).count();
-            long imageJpeg = visitNyPostData.parallelStream().filter(data -> data.getContentType().contains("image/jpeg")).count();
-            long imagePng = visitNyPostData.parallelStream().filter(data -> data.getContentType().contains("image/png")).count();
-            long pdfCount = visitNyPostData.parallelStream().filter(data -> data.getContentType().contains("application/pdf")).count();
-
-            long totalOutGoingNumbers = visitNyPostData.parallelStream().mapToInt(data -> data.getOutLinkNumbers()).sum();
+            long featchSucceded = 0;
+            long twoHund = 0, threeHundOne = 0, fourNotOne = 0, fourNotThree = 0, fourNotFour = 0;
 
 
-            long OKCount = urlsNyPostData.parallelStream().filter(data -> data.getOkayStatus().equals(WebConstant.STATUS_OK)).count();
-            long NOKCount = urlsNyPostData.parallelStream().filter(data -> data.getOkayStatus().equals(WebConstant.STATUS_N_OK)).count();
-            sbuff.append("\n\nOutgoing URLs:");
-            sbuff.append("\n=============");
-            sbuff.append("\n # Unique URLs extracted:\t" + totalOutGoingNumbers);
-            sbuff.append("\n # Unique URLs within News Site:\t" + OKCount);
-            sbuff.append("\n # Unique URLs outside News Site:\t" + NOKCount);
+            for (int idx = 0; idx < fetchNyPostData.size(); idx++) {
+                FetechNYPost data = fetchNyPostData.get(idx);
+                int statusCode = Integer.valueOf(data.getStatusCode());
+
+                if (statusCode >= 200 && statusCode <= 299) featchSucceded++;
+                if (statusCode == 200) twoHund++;
+                if (statusCode == 301) threeHundOne++;
+                if (statusCode == 401) fourNotOne++;
+                if (statusCode == 403) fourNotThree++;
+                if (statusCode == 404) fourNotFour++;
 
 
-            sbuff.append("\n\nStatus Codes:");
-            sbuff.append("\n=============");
-            sbuff.append("\n 200 OK:\t" + twoHund);
-            sbuff.append("\n 301 Moved Permanently:\t" + threeHundOne);
-            sbuff.append("\n 401 Unauthorized:\t" + fourNotOne);
-            sbuff.append("\n 403 Forbidden:\t" + fourNotThree);
-            sbuff.append("\n 404 Not Found:\t" + fourNotFour);
+            }
 
-            sbuff.append("\n\n Content Types: ");
-            sbuff.append("\n=============");
-            sbuff.append("\n text/html:\t" + textHtml);
-            sbuff.append("\n image/gif:\t" + imageGif);
-            sbuff.append("\n image/jpeg:\t" + imageJpeg);
-            sbuff.append("\n image/png:\t" + imagePng);
-            sbuff.append("\n application/pdf:\t" + pdfCount);
+            int htmlCount = 0, imageGifCount = 0, imageJPEGCount = 0, imagePNGCount = 0, pdfCount = 0;
+            int lessOneKB = 0, oneToTenKB = 0, tenToHunKB = 0, hundToOneMB = 0, moreThanOneMB = 0;
+
+            for (int idx = 0; idx < visitNyPostData.size(); idx++) {
+
+                NYPostCrawlInfo data = visitNyPostData.get(idx);
+                if (data.getContentType().contains(WebConstant.TEXT_HTML)) htmlCount++;
+                if (data.getContentType().contains(WebConstant.IMAGE_GIF)) imageGifCount++;
+                if (data.getContentType().contains(WebConstant.IMAGE_JPEG)) imageJPEGCount++;
+                if (data.getContentType().contains(WebConstant.IMAGE_PNG)) imagePNGCount++;
+                if (data.getContentType().contains(WebConstant.APP_PDF)) pdfCount++;
+
+                if (data.getContentSize() < 1) lessOneKB++;
+                if (data.getContentSize() >= 1 && data.getContentSize() < 10) oneToTenKB++;
+                if (data.getContentSize() >= 10 && data.getContentSize() < 100) tenToHunKB++;
+                if (data.getContentSize() >= 100 && data.getContentSize() < 1024) hundToOneMB++;
+                else moreThanOneMB++;
+
+
+            }
+
+            //long totalOutGoingNumbers = visitNyPostData.parallelStream().mapToInt(data -> data.getOutLinkNumbers()).sum();
+
+
+            long OKCount = urlsNyPostData.parallelStream().filter(data -> data.getOkayStatus().equals(WebConstant.STATUS_OK)).distinct().count();
+            long NOKCount = urlsNyPostData.parallelStream().filter(data -> data.getOkayStatus().equals(WebConstant.STATUS_N_OK)).distinct().count();
+
+            sbuff.append(WebConstant.FETCH_ATEMP + fetchNyPostData.size()).append(WebConstant.FETEH_SCUS + featchSucceded);
+            sbuff.append(WebConstant.FETCH_ABORT_FAIL + (fetchNyPostData.size() - featchSucceded));
+
+            sbuff.append(WebConstant.OUTGOING_URL);
+            sbuff.append(WebConstant.SEG_LINE).
+                    append(WebConstant.TOTAL_URL_EXT + fetchNyPostData.size());
+            sbuff.append(WebConstant.TOTAL_UNQ_URL_EXT + fetchNyPostData.parallelStream().distinct().count());
+            sbuff.append(WebConstant.TOTAL_UNQ_URL_INSIDE + OKCount);
+            sbuff.append(WebConstant.TOTAL_UNQ_URL_OUTSIDE + NOKCount);
+
+
+            sbuff.append(WebConstant.STATUS_CODES);
+            sbuff.append(WebConstant.SEG_LINE);
+            sbuff.append(WebConstant.TWO_100 + twoHund);
+            sbuff.append(WebConstant.THREE_101 + threeHundOne);
+            sbuff.append(WebConstant.FOUR_101 + fourNotOne);
+            sbuff.append(WebConstant.FOUR_103 + fourNotThree);
+            sbuff.append(WebConstant.FOUR_104 + fourNotFour);
+
+            sbuff.append(WebConstant.FILE_SIZES).append(WebConstant.SEG_LINE);
+
+            sbuff.append(WebConstant.LESS_1).append(lessOneKB);
+            sbuff.append(WebConstant.ONE_TEN_KB).append(oneToTenKB);
+            sbuff.append(WebConstant.TEN_HUND_KB).append(tenToHunKB);
+            sbuff.append(WebConstant.HUND_HUND_ONE_MB).append(hundToOneMB);
+            sbuff.append(WebConstant.MORE_THANN_ONE_MB).append(moreThanOneMB);
+
+
+            sbuff.append(WebConstant.CONTENT_TYPE_STR);
+            sbuff.append(WebConstant.SEG_LINE);
+            sbuff.append(WebConstant.TEXT_HTML + htmlCount);
+            sbuff.append(WebConstant.IMAGE_GIF + imageGifCount);
+            sbuff.append(WebConstant.IMAGE_JPEG + imageJPEGCount);
+            sbuff.append(WebConstant.IMAGE_PNG + imagePNGCount);
+            sbuff.append(WebConstant.APP_PDF + pdfCount);
 
 
             buildCrawlReportNYPosy(sbuff.toString());
@@ -193,24 +200,8 @@ public class NYPOSTCrawler extends WebCrawler {
         }
     }
 
-    private void buildOKVisitURLCSV(FileWriter writer) {
-        try {
-            okNoVisitNyPostData.parallelStream().forEach(data -> {
-                try {
-                    CSVUtils.writeLine(writer, Arrays.asList(data));
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
-            });
-            writer.flush();
-            writer.close();
-        } catch (Exception e) {
 
-        }
-
-    }
-
-    private void buildCrawlReportNYPosy(String content) {
+    private static void buildCrawlReportNYPosy(String content) {
         try {
             PrintWriter writer = new PrintWriter(new File(WebConstant.CRAWL_REPORT_NYPOST), "UTF-8");
             writer.print(content);
@@ -221,11 +212,11 @@ public class NYPOSTCrawler extends WebCrawler {
         }
     }
 
-    private void buildURLCSV(FileWriter writer) {
+    private static void buildURLCSV(FileWriter writer) {
         try {
             urlsNyPostData.parallelStream().forEach(data -> {
                 try {
-                    CSVUtils.writeLine(writer, Arrays.asList(data.getUrl(), String.valueOf(data.getOkayStatus()), String.valueOf(data.isExcluded()), String.valueOf(data.getStatusCode())));
+                    CSVUtils.writeLine(writer, Arrays.asList(data.getUrl(), String.valueOf(data.getOkayStatus())));
                 } catch (IOException e) {
                     e.printStackTrace();
                 }
