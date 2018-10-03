@@ -24,8 +24,8 @@ public class WebConstant {
 
     public static final String OK_NOVISIT_NYPOST = "data/crawl/ok_novisit_nypost.csv";
 
-    public static final String AUTH_NAME = "\n Name :\t Mukesh Dangi \n";
-    public static final String AUTH_ID = "\n USC ID :\t 4297380684";
+    public static final String AUTH_NAME = "\n Name :\t Mukesh \n";
+    public static final String AUTH_ID = "\n USC ID :\t XXXXX";
     public static final String CRAWL_WEB = "\n News site crawled: nypost.com";
 
     public static final String SEG_LINE = "\n========================================================";
