@@ -28,7 +28,7 @@ public class WebConstant {
     public static final String AUTH_ID = "\n USC ID :\t 4297380684";
     public static final String CRAWL_WEB = "\n News site crawled: nypost.com";
 
-    public static final String SEG_LINE = "\n\n ========================================================";
+    public static final String SEG_LINE = "\n========================================================";
     public static final String FETCH_STAT = "\n\t\tFetch Statistics";
     public static final String FETCH_ATEMP = "\n# fetches attempted:\t";
     public static final String FETEH_SCUS = "\n# fetches succeeded:\t";
@@ -41,11 +41,15 @@ public class WebConstant {
     public static final String TOTAL_UNQ_URL_INSIDE = "\n # Unique URLs within News Site:\t";
     public static final String TOTAL_UNQ_URL_OUTSIDE = "\n # Unique URLs outside News Site:\t";
 
+    public static final String NEW_LINE = "\n";
+    public static final String SPACE_COL = " : ";
     public static final String TEXT_HTML = "text/html";
     public static final String IMAGE_PNG = "image/png";
     public static final String IMAGE_JPEG = "image/jpeg";
     public static final String IMAGE_GIF = "image/gif";
     public static final String APP_PDF = "applciation/pdf";
+    public static final String APP_JSON = "application/json";
+    public static final String APP_RSS_XML = "application/rss+xml";
 
 
     public static final String STATUS_CODES = "\n\nStatus Codes:";
@@ -54,15 +58,16 @@ public class WebConstant {
     public static final String FOUR_101 = "\n 401 Unauthorized:\t";
     public static final String FOUR_103 = "\n 403 Forbidden:\t";
     public static final String FOUR_104 = "\n 404 Not Found:\t";
+    public static final String OTHER_CODE = "\n Other Codes Count:\t";
 
-    public  static  final  String FILE_SIZES="\n\n  File Sizes:";
-    public static  final  String LESS_1="\n <1KB : ";
-    public  static  final  String ONE_TEN_KB="\n 1KB ~ <10 KB : ";
-    public static final  String TEN_HUND_KB="\n 10KB ~ <100 KB : ";
-    public static final  String HUND_HUND_ONE_MB="\n 100KB ~ <1 MB : ";
-    public static final  String MORE_THANN_ONE_MB="\n >=1 MB : ";
+    public static final String FILE_SIZES = "\n\n  File Sizes:";
+    public static final String LESS_1 = "\n <1KB : ";
+    public static final String ONE_TEN_KB = "\n 1KB ~ <10 KB : ";
+    public static final String TEN_HUND_KB = "\n 10KB ~ <100 KB : ";
+    public static final String HUND_HUND_ONE_MB = "\n 100KB ~ <1 MB : ";
+    public static final String MORE_THANN_ONE_MB = "\n >=1 MB : ";
 
-    public static final  String CONTENT_TYPE_STR="\n\n Content Types: ";
+    public static final String CONTENT_TYPE_STR = "\n\n Content Types: ";
 
 
 }

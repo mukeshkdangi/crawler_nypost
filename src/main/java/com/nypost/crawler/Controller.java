@@ -15,7 +15,7 @@ public class Controller {
     public static String HTTPS_NY_POST_NEWS = "https://nypost.com/";
     public static String HTTP_NY_POST_NEWS = "http://nypost.com/";
 
-    static  public  void main(String... args) throws Exception {
+    static public void main(String... args) throws Exception {
         String crawlStorageFolder = "data/crawl";
 
         int numberOfCrawlers = 7;
@@ -23,11 +23,12 @@ public class Controller {
         CrawlConfig config = new CrawlConfig();
         config.setCrawlStorageFolder(crawlStorageFolder);
         config.setMaxDepthOfCrawling(7);
-        config.setMaxPagesToFetch(200);
-       // config.setPolitenessDelay();
+        config.setMaxPagesToFetch(100);
+        // config.setPolitenessDelay();
         config.setUserAgentString(USER_AGENT);
         config.setConnectionTimeout(20000);
         config.setIncludeBinaryContentInCrawling(true);
+
 
 
 
@@ -36,10 +37,11 @@ public class Controller {
          */
         PageFetcher pageFetcher = new PageFetcher(config);
         RobotstxtConfig robotstxtConfig = new RobotstxtConfig();
-        robotstxtConfig.setEnabled(false);
+        robotstxtConfig.setEnabled(true);
 
         RobotstxtServer robotstxtServer = new RobotstxtServer(robotstxtConfig, pageFetcher);
         CrawlController controller = new CrawlController(config, pageFetcher, robotstxtServer);
+
 
         /*
          * For each crawl, you need to add some seed urls. These are the first
@@ -52,7 +54,7 @@ public class Controller {
          * Start the crawl. This is a blocking operation, meaning that your code
          * will reach the line after this only when crawling is finished.
          */
-            controller.start(NYPOSTCrawler.class, numberOfCrawlers);
-            NYPOSTCrawler.onBeforeExitCrawler();
+        controller.start(NYPOSTCrawler.class, numberOfCrawlers);
+       // NYPOSTCrawler.onBeforeExitCrawler();
     }
 }
